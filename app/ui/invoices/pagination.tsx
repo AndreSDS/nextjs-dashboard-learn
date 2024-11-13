@@ -4,17 +4,18 @@ import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import Link from "next/link";
 import { generatePagination } from "@/app/lib/utils";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import { searchParamsParsers } from "@/app/lib/searchParams";
 
 export default function Pagination({ totalPages }: { totalPages: number }) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get("page")) || 1;
+  const [{ page, query }] = useQueryStates(searchParamsParsers);
 
-  const createPageURL = (page: number | string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("page", page.toString());
-    return `${pathname}?${params.toString()}`;
+  const pathname = usePathname();
+  const currentPage = page;
+
+  const createPageURL = (pageNumber: number) => {
+    return `${pathname}?query=${query}&page=${pageNumber.toString()}`;
   };
 
   const allPages = generatePagination(currentPage, totalPages);
@@ -29,21 +30,21 @@ export default function Pagination({ totalPages }: { totalPages: number }) {
         />
 
         <div className="flex -space-x-px">
-          {allPages.map((page, index) => {
+          {allPages.map((pageNumber, index) => {
             let position: "first" | "last" | "single" | "middle" | undefined;
 
             if (index === 0) position = "first";
             if (index === allPages.length - 1) position = "last";
             if (allPages.length === 1) position = "single";
-            if (page === "...") position = "middle";
+            if (pageNumber === "...") position = "middle";
 
             return (
               <PaginationNumber
-                key={page}
-                href={createPageURL(page)}
-                page={page}
+                key={pageNumber}
+                href={createPageURL(page as number)}
+                page={pageNumber}
                 position={position}
-                isActive={currentPage === page}
+                isActive={currentPage === pageNumber}
               />
             );
           })}
